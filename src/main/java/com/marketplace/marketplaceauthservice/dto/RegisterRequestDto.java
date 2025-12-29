@@ -1,11 +1,16 @@
 package com.marketplace.marketplaceauthservice.dto;
 
+import com.marketplace.marketplaceauthservice.enums.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class RegisterRequestDto {
     @NotBlank(message = "Username cannot be empty")
     @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
@@ -19,4 +24,5 @@ public class RegisterRequestDto {
     @Email(message = "Invalid email format")
     private String email;
 
+    private Role role = Role.USER;
 }

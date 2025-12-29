@@ -1,26 +1,31 @@
 package com.marketplace.marketplaceauthservice.service;
 
+import com.marketplace.marketplaceauthservice.config.JwtTokenProvider;
 import com.marketplace.marketplaceauthservice.enums.Role;
+import com.marketplace.marketplaceauthservice.model.MyUserDetails;
 import com.marketplace.marketplaceauthservice.model.User;
 import com.marketplace.marketplaceauthservice.repository.UserRepository;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
 
     public AuthService(UserRepository userRepository,
-                       PasswordEncoder passwordEncoder) {
+                       PasswordEncoder passwordEncoder,
+                       JwtTokenProvider jwtTokenProvider) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtTokenProvider = jwtTokenProvider;
     }
 
-    public User registerUser(String username, String password, String email) {
-
+    public User registerUser(String username, String password, String email, Role role) {
         if (userRepository.existsUserByUsername(username)) {
             throw new IllegalArgumentException("Username already exists!");
         }
@@ -33,27 +38,35 @@ public class AuthService {
         newUser.setUsername(username);
         newUser.setPassword(passwordEncoder.encode(password));
         newUser.setEmail(email);
-        newUser.setRole(Role.ROLE_USER);
+        newUser.setRole(role != null ? role : Role.USER);
 
         return userRepository.save(newUser);
     }
 
-    public boolean login(String username, String plainPassword) {
+    public String login(String username, String plainPassword) {
         User user = userRepository.findByUsername(username);
         if (user == null) {
-            return false;
+            throw new IllegalArgumentException("Username not found");
         }
-        return passwordEncoder.matches(plainPassword, user.getPassword());
+
+        if (!passwordEncoder.matches(plainPassword, user.getPassword())) {
+            throw new IllegalArgumentException("Invalid password");
+        }
+
+        MyUserDetails userDetails = new MyUserDetails(
+                user.getUsername(),
+                user.getPassword(),
+                user.getRole().name() // "ADMIN" or "USER"
+        );
+
+        return jwtTokenProvider.generateToken(userDetails);
     }
 
-    public User getUserByUsername(String username) {
-        return userRepository.findByUsername(username);
+    public Optional<User> findById(Long id) {
+        return userRepository.findById(id);
     }
 
-    public User getUserByEmail(String email) {
-        return (User) userRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new UsernameNotFoundException(
-                                "User not found with email: " + email));
+    public Optional<User> findByUsername(String username) {
+        return Optional.ofNullable(userRepository.findByUsername(username));
     }
 }

@@ -24,11 +24,10 @@ public class AuthServiceDetails implements UserDetailsService {
             throw new UsernameNotFoundException("User not found: " + username);
         }
 
-        // MyUserDetails istifadə olunur
         return new MyUserDetails(
                 user.getUsername(),
                 user.getPassword(),
-                user.getRole().name() // "ROLE_USER" və ya "ROLE_ADMIN"
+                user.getRole().name()
         );
     }
 }

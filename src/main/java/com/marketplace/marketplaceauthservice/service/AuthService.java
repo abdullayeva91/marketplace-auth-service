@@ -56,10 +56,10 @@ public class AuthService {
         MyUserDetails userDetails = new MyUserDetails(
                 user.getUsername(),
                 user.getPassword(),
-                user.getRole().name() // "ADMIN" or "USER"
+                user.getRole().name()
         );
 
-        return jwtTokenProvider.generateToken(userDetails);
+        return jwtTokenProvider.generateToken(userDetails, user.getId());
     }
 
     public Optional<User> findById(Long id) {

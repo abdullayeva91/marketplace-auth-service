@@ -47,6 +47,23 @@ public class JwtTokenProvider {
                 .parseClaimsJws(token)
                 .getBody();
     }
+    public String generateToken(MyUserDetails userDetails, Long userId) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", userDetails.getRole());
+        claims.put("userId", userId);
+
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(userDetails.getUsername())
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + expiration))
+                .signWith(getSigningKey())
+                .compact();
+    }
+
+    public Long extractUserId(String token) {
+        return extractAllClaims(token).get("userId", Long.class);
+    }
 
     public String extractUsername(String token) {
         return extractAllClaims(token).getSubject();

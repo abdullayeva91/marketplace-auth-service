@@ -1,0 +1,51 @@
+services:
+  auth-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    platform: linux/amd64
+    container_name: auth-service
+    ports:
+      - "8081:8081"
+    expose:
+      - "8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      # - JWT_SECRET=${JWT_SECRET}   # .env-dən oxumaq üçün saxla
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - backend
+
+    # 🔥 AVTOMATİK DƏYİŞİKLİK ÜÇÜN - KOD YAZANDA AVTOMATIK REBUILD + RESTART
+    develop:
+      watch:
+        - action: rebuild
+          path: ./src/main/java
+          ignore:
+            - "**/*.class"
+            - "**/target/**"
+            - "**/build/**"
+            - ".gradle/**"
+
+        - action: sync+restart
+          path: ./src/main/resources
+          target: /app/classes
+
+        - action: rebuild
+          path: ./build.gradle
+
+        - action: rebuild
+          path: ./gradle.properties
+
+
+
+networks:
+  backend:
+    driver: bridge
+    name: marketplace-backend

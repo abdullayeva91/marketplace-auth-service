@@ -29,7 +29,17 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         try {
+            String path = request.getRequestURI();
+
+            System.out.println("AUTH FILTER: Gələn sorğu yolu -> " + path);
+
+            if (path.contains("/api/auth/register") || path.contains("/api/auth/login")) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
             String jwt = getJwtFromRequest(request);
+
             if (StringUtils.hasText(jwt) && jwtTokenProvider.validateToken(jwt)) {
                 String username = jwtTokenProvider.extractUsername(jwt);
                 UserDetails userDetails = authServiceDetails.loadUserByUsername(username);
@@ -39,10 +49,12 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+                System.out.println("AUTH FILTER: İstifadəçi təsdiqləndi -> " + username);
             }
         } catch (Exception e) {
-            logger.error("Could not set user authentication", e);
+            System.err.println("AUTH FILTER XƏTASI: " + e.getMessage());
         }
+
         filterChain.doFilter(request, response);
     }
 
